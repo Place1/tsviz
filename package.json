@@ -25,9 +25,10 @@
   "homepage": "https://github.com/joaompneves/tsviz",
   "dependencies": {
     "graphviz": ">=0.0.8",
-    "typescript": "=1.8.10"
+    "typescript": "=2.3.3"
   },
   "devDependencies": {
+    "@types/node": "^7.0.22",
     "ts-node": "^3.0.4"
   }
 }

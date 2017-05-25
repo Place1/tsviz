@@ -1,5 +1,3 @@
-/// <reference path="typings/node/node.d.ts" />
-
 import { readdirSync, lstatSync, existsSync, statSync } from "fs";
 import * as path from 'path';
 import * as ts from "typescript";

@@ -109,13 +109,13 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
 
     function getVisibility(node: ts.Node) {
         if (node.modifiers) {
-            if (hasModifierSet(node.modifiers.flags, ts.NodeFlags.Protected)) {
+            if (hasModifierSet(node.modifiers, ts.ModifierFlags.Protected)) {
                 return Visibility.Protected;
-            } else if (hasModifierSet(node.modifiers.flags, ts.NodeFlags.Private)) {
+            } else if (hasModifierSet(node.modifiers, ts.ModifierFlags.Private)) {
                 return Visibility.Private;
-            } else if (hasModifierSet(node.modifiers.flags, ts.NodeFlags.Public)) {
+            } else if (hasModifierSet(node.modifiers, ts.ModifierFlags.Public)) {
                 return Visibility.Public;
-            } else if (hasModifierSet(node.modifiers.flags, ts.NodeFlags.Export)) {
+            } else if (hasModifierSet(node.modifiers, ts.ModifierFlags.Export)) {
                 return Visibility.Public;
             }
         }
@@ -130,15 +130,20 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
 
     function getLifetime(node: ts.Node) {
         if (node.modifiers) {
-            if (hasModifierSet(node.modifiers.flags, ts.NodeFlags.Static)) {
+            if (hasModifierSet(node.modifiers, ts.ModifierFlags.Static)) {
                 return Lifetime.Static;
             }
         }
         return Lifetime.Instance;
     }
 
-    function hasModifierSet(value: number, modifier: number) {
-        return (value & modifier) === modifier;
+    function hasModifierSet(modifiers: Array<ts.Modifier>, modiferFlag: ts.ModifierFlags) {
+        for (let mod of modifiers) {
+            if ((mod.flags & modiferFlag) === modiferFlag) {
+                return true;
+            }
+        }
+        return false;
     }
 
     return module;
