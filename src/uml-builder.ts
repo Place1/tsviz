@@ -100,9 +100,7 @@ function buildClass(classDef: Class, g: graphviz.Graph, path: string) {
 }
 
 function combineSignatures<T extends Element>(elements: T[], map: (e: T) => string): string {
-    return elements.filter(e => e.visibility == Visibility.Public)
-        .map(e => map(e) + "\\l")
-        .join("");
+    return elements.map(e => map(e) + "\\l").join("");
 }
 
 function getMethodSignature(method: Method): string {
