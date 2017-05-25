@@ -87,7 +87,7 @@ function buildClass(classDef: Class, g: graphviz.Graph, path: string) {
     let classNode = g.addNode(
         getGraphNodeId(path, classDef.name),
         {
-            "label": "{" + [ classDef.name, methodsSignatures, propertiesSignatures].filter(e => e.length > 0).join("|") + "}"
+            "label": "{" + [ classDef.name, propertiesSignatures, methodsSignatures].filter(e => e.length > 0).join("|") + "}"
         });
 
     if(classDef.extends) {
@@ -100,7 +100,17 @@ function buildClass(classDef: Class, g: graphviz.Graph, path: string) {
 }
 
 function combineSignatures<T extends Element>(elements: T[], map: (e: T) => string): string {
-    return elements.map(e => map(e) + "\\l").join("");
+    const order = [Visibility.Private, Visibility.Protected, Visibility.Public];
+    const sortedElements: T[] = [];
+    // the following algorithm to sort is not optimal
+    order.forEach((visibility) => {
+        elements.forEach((element) => {
+            if (element.visibility === visibility) {
+                sortedElements.push(element);
+            }
+        });
+    });
+    return sortedElements.map(e => map(e) + "\\l").join("");
 }
 
 function getMethodSignature(method: Method): string {
