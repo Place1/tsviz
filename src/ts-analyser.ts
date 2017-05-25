@@ -109,13 +109,13 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
 
     function getVisibility(node: ts.Node) {
         if (node.modifiers) {
-            if (hasModifierSet(node.modifiers, ts.ModifierFlags.Protected)) {
+            if (hasModifierSet(node.modifiers, ts.SyntaxKind.ProtectedKeyword)) {
                 return Visibility.Protected;
-            } else if (hasModifierSet(node.modifiers, ts.ModifierFlags.Private)) {
+            } else if (hasModifierSet(node.modifiers, ts.SyntaxKind.PrivateKeyword)) {
                 return Visibility.Private;
-            } else if (hasModifierSet(node.modifiers, ts.ModifierFlags.Public)) {
+            } else if (hasModifierSet(node.modifiers, ts.SyntaxKind.PublicKeyword)) {
                 return Visibility.Public;
-            } else if (hasModifierSet(node.modifiers, ts.ModifierFlags.Export)) {
+            } else if (hasModifierSet(node.modifiers, ts.SyntaxKind.ExportKeyword)) {
                 return Visibility.Public;
             }
         }
@@ -130,16 +130,16 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
 
     function getLifetime(node: ts.Node) {
         if (node.modifiers) {
-            if (hasModifierSet(node.modifiers, ts.ModifierFlags.Static)) {
+            if (hasModifierSet(node.modifiers, ts.SyntaxKind.StaticKeyword)) {
                 return Lifetime.Static;
             }
         }
         return Lifetime.Instance;
     }
 
-    function hasModifierSet(modifiers: Array<ts.Modifier>, modiferFlag: ts.ModifierFlags) {
+    function hasModifierSet(modifiers: Array<ts.Modifier>, syntaxKind: ts.SyntaxKind) {
         for (let mod of modifiers) {
-            if ((mod.flags & modiferFlag) === modiferFlag) {
+            if ((mod.kind & syntaxKind) === syntaxKind) {
                 return true;
             }
         }
