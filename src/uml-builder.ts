@@ -3,6 +3,8 @@
 import * as graphviz from "graphviz";
 import { Element, Module, Class, Method, Property, Visibility, QualifiedName, Lifetime } from "./ts-elements";
 import { Collections } from "./extensions";
+import * as fs from 'fs';
+import * as path from 'path';
 
 export function buildUml(modules: Module[], outputFilename: string, dependenciesOnly: boolean, svgOutput: boolean) {
     let g: graphviz.Graph = graphviz.digraph("G");
@@ -11,7 +13,7 @@ export function buildUml(modules: Module[], outputFilename: string, dependencies
     const FontSize = 12;
     const FontNameKey = "fontname";
     const FontName = "Verdana";
-    
+
     // set diagram default styles
     g.set(FontSizeKey, FontSize);
     g.set(FontNameKey, FontName);
@@ -20,35 +22,39 @@ export function buildUml(modules: Module[], outputFilename: string, dependencies
     g.setNodeAttribut(FontSizeKey, FontSize);
     g.setNodeAttribut(FontNameKey, FontName);
     g.setNodeAttribut("shape", "record");
-    
+
     modules.forEach(module => {
         buildModule(module, g, module.path, 0, dependenciesOnly);
     });
-    
+
+    const pathVariable = <string> process.env["PATH"];
     if (process.platform === "win32") {
-        let pathVariable = <string> process.env["PATH"];
         if (pathVariable.indexOf("Graphviz") === -1) {
             console.warn("Could not find Graphviz in PATH.");
         }
     } else {
         // Set GraphViz path (if not in your path)
-        g.setGraphVizPath("/usr/local/bin");
+        pathVariable.split(':').forEach(location => {
+            if (fs.existsSync(path.join(location, 'dot'))) {
+                g.setGraphVizPath(location);
+            }
+        });
     }
-    
+
     // Generate a PNG/SVG output
     g.output(svgOutput ? "svg" : "png", outputFilename);
 }
 
 function buildModule(module: Module, g: graphviz.Graph, path: string, level: number, dependenciesOnly: boolean) {
     const ModulePrefix = "cluster_";
-    
+
     let moduleId = getGraphNodeId(path, module.name);
     let cluster = g.addCluster("\"" + ModulePrefix + moduleId + "\"");
-    
+
     cluster.set("label", (module.visibility !== Visibility.Public ? visibilityToString(module.visibility) + " " : "") + module.name);
     cluster.set("style", "filled");
     cluster.set("color", "gray" + Math.max(40, (95 - (level * 6))));
-    
+
     if (dependenciesOnly) {
         Collections.distinct(module.dependencies, d => d.name).forEach(d => {
             g.addEdge(module.name, getGraphNodeId("", d.name));
@@ -58,16 +64,16 @@ function buildModule(module: Module, g: graphviz.Graph, path: string, level: num
         if (moduleMethods) {
             cluster.addNode(
                 getGraphNodeId(path, module.name),
-                { 
+                {
                     "label": moduleMethods,
                     "shape": "none"
                 });
         }
-        
+
         module.modules.forEach(childModule => {
             buildModule(childModule, cluster, moduleId, level + 1, false);
         });
-        
+
         module.classes.forEach(childClass => {
             buildClass(childClass, cluster, moduleId);
         });
@@ -77,18 +83,18 @@ function buildModule(module: Module, g: graphviz.Graph, path: string, level: num
 function buildClass(classDef: Class, g: graphviz.Graph, path: string) {
     let methodsSignatures = combineSignatures(classDef.methods, getMethodSignature);
     let propertiesSignatures = combineSignatures(classDef.properties, getPropertySignature);
-    
+
     let classNode = g.addNode(
         getGraphNodeId(path, classDef.name),
-        { 
+        {
             "label": "{" + [ classDef.name, methodsSignatures, propertiesSignatures].filter(e => e.length > 0).join("|") + "}"
         });
-    
+
     if(classDef.extends) {
         // add inheritance arrow
         g.addEdge(
-            classNode, 
-            classDef.extends.parts.reduce((path, name) => getGraphNodeId(path, name), ""), 
+            classNode,
+            classDef.extends.parts.reduce((path, name) => getGraphNodeId(path, name), ""),
             { "arrowhead": "onormal" });
     }
 }
@@ -100,7 +106,7 @@ function combineSignatures<T extends Element>(elements: T[], map: (e: T) => stri
 }
 
 function getMethodSignature(method: Method): string {
-    return [ 
+    return [
         visibilityToString(method.visibility),
         lifetimeToString(method.lifetime),
         getName(method) + "()"
@@ -111,7 +117,7 @@ function getPropertySignature(property: Property): string {
     return [
         visibilityToString(property.visibility),
         lifetimeToString(property.lifetime),
-        [ 
+        [
             (property.hasGetter ? "get" : null),
             (property.hasSetter ? "set" : null)
         ].filter(v => v !== null).join("/"),
@@ -126,7 +132,7 @@ function visibilityToString(visibility: Visibility) {
         case Visibility.Protected:
             return "~";
         case Visibility.Private:
-            return "-";        
+            return "-";
     }
 }
 

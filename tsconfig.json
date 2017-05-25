@@ -4,7 +4,14 @@
 	    "noImplicitAny": true,
 	    "removeComments": true,
 	    "preserveConstEnums": true,
-		"target": "ES5",
-		"outDir": "../bin/"
-	}
+		"sourceMap": true,
+		"target": "es6",
+		"outDir": "bin/"
+	},
+	"include": [
+		"src/**/*.ts"
+	],
+	"exclude": [
+		"node_modules/"
+	]
 }

@@ -26,5 +26,8 @@
   "dependencies": {
     "graphviz": ">=0.0.8",
     "typescript": "=1.8.10"
+  },
+  "devDependencies": {
+    "ts-node": "^3.0.4"
   }
 }

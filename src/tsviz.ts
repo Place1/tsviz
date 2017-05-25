@@ -1,10 +1,12 @@
 /// <reference path="typings/node/node.d.ts" />
 
 import { readdirSync, lstatSync, existsSync, statSync } from "fs";
+import * as path from 'path';
 import * as ts from "typescript";
 import { Module } from "./ts-elements";
-import * as analyser from "./ts-analyser"; 
+import * as analyser from "./ts-analyser";
 import * as umlBuilder from "./uml-builder";
+import { flatten } from './util';
 
 export interface OutputModule {
 	name: string;
@@ -13,29 +15,19 @@ export interface OutputModule {
 
 function walk(dir: string, recursive: boolean): string[] {
     /* Source: http://stackoverflow.com/a/5827895 */
-    let results: string[] = [];
-    let list = readdirSync(dir);
-
-    let i = 0;
-    (function next() {
-        let file = list[i++];
-        if (!file) {
-            return results;
-        }
-        file = dir + '/' + file;
-        let stat = statSync(file);
-        if (stat && stat.isDirectory()) {
-            if (recursive) {
-                results = results.concat(walk(file, recursive));
-                next();
-            }
+    const list = readdirSync(dir);
+    const results = list.map((item) => {
+        const itemFullPath = path.join(dir, item);
+        const stat = lstatSync(itemFullPath);
+        if (stat.isFile()) {
+            // if it's a file, include it
+            return itemFullPath;
         } else {
-            results.push(file);
-            next();
+            // otherwise recursively walk the directory
+            return walk(itemFullPath, recursive);
         }
-    })();
-
-    return results;
+    });
+    return flatten(results);
 }
 
 function getFiles(targetPath: string, recursive: boolean): string[] {
@@ -58,9 +50,9 @@ function getModules(targetPath: string, recursive: boolean): Module[] {
     let originalDir = process.cwd();
     let fileNames = getFiles(targetPath, recursive);
     const compilerOptions: ts.CompilerOptions = {
-        noEmitOnError: true, 
+        noEmitOnError: true,
         noImplicitAny: true,
-        target: ts.ScriptTarget.ES5, 
+        target: ts.ScriptTarget.ES5,
         module: ts.ModuleKind.AMD
     };
 
@@ -72,7 +64,7 @@ function getModules(targetPath: string, recursive: boolean): Module[] {
         .map(sourceFile => analyser.collectInformation(program, sourceFile));
 
     process.chdir(originalDir); // go back to the original dir
-    
+
     console.log("Found " + modules.length + " module(s)");
 
     return modules;
