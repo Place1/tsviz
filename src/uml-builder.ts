@@ -139,7 +139,9 @@ function getPropertySignature(property: Property): string {
             (property.hasGetter ? "get" : null),
             (property.hasSetter ? "set" : null)
         ].filter(v => v !== null).join("/"),
-        getName(property)
+        getName(property),
+        ':',
+        property.type.name,
     ].join(" ");
 }
 

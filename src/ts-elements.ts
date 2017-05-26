@@ -26,6 +26,15 @@ export class QualifiedName {
     public get parts(): string[] {
         return this.nameParts;
     }
+
+    public get name(): string {
+        const size = this.nameParts.length;
+        return this.nameParts[size - 1]; // last item
+    }
+
+    public get fullName(): string {
+        return this.nameParts.join('.');
+    }
 }
 
 export abstract class Element {
@@ -124,7 +133,7 @@ export class Class extends Element {
         const uniqueDeps = new Map<string, QualifiedName>();
         deps.forEach(dep => {
             // loop to get rid of duplicate dependencies.
-            const key = dep.parts.join();
+            const key = dep.fullName;
             uniqueDeps.set(key, dep);
         });
         return [...uniqueDeps.values()];
