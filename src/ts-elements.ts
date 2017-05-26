@@ -171,7 +171,24 @@ export class Class extends Element {
 }
 
 export class Method extends Element {
+    private _returnType: QualifiedName;
+    private _argumentTypes = new Array<QualifiedName>();
 
+    public get returnType(): QualifiedName {
+        return this._returnType;
+    }
+
+    public set returnType(value: QualifiedName) {
+        this._returnType = value;
+    }
+
+    public get argumentTypes(): Array<QualifiedName> {
+        return this._argumentTypes;
+    }
+
+    public set argumentTypes(value: Array<QualifiedName>) {
+        this._argumentTypes = value;
+    }
 }
 
 export class ImportedModule extends Element {

@@ -127,7 +127,9 @@ function getMethodSignature(method: Method): string {
     return [
         visibilityToString(method.visibility),
         lifetimeToString(method.lifetime),
-        getName(method) + "()"
+        `${getName(method)}(${method.argumentTypes.map(argType => argType.name).join(',')})`,
+        ":",
+        method.returnType.name
     ].join(" ");
 }
 
@@ -140,8 +142,8 @@ function getPropertySignature(property: Property): string {
             (property.hasSetter ? "set" : null)
         ].filter(v => v !== null).join("/"),
         getName(property),
-        ':',
-        property.type.name,
+        ":",
+        property.type.name
     ].join(" ");
 }
 

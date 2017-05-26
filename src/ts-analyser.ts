@@ -55,8 +55,7 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
                 let propertyDeclaration = <ts.PropertyDeclaration> node;
                 let property = new Property((<ts.Identifier>propertyDeclaration.name).text, currentElement, getVisibility(node), getLifetime(node));
                 const type = typeChecker.getTypeAtLocation(propertyDeclaration);
-                const qualifiedName = getFullyQualifiedName(type.getSymbol());
-                property.type = qualifiedName;
+                property.type = getFullyQualifiedNameOfType(type);
                 switch (node.kind) {
                     case ts.SyntaxKind.GetAccessor:
                         property.hasGetter = true;
@@ -70,11 +69,19 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
 
             case ts.SyntaxKind.MethodDeclaration:
             case ts.SyntaxKind.FunctionDeclaration:
-                let functionDeclaration = <ts.Declaration> node;
-                childElement = new Method((<ts.Identifier>functionDeclaration.name).text, currentElement, getVisibility(node), getLifetime(node));
+                let functionDeclaration = <ts.FunctionDeclaration> node;
+                const method = new Method((<ts.Identifier>functionDeclaration.name).text, currentElement, getVisibility(node), getLifetime(node));
+                const signature = typeChecker.getSignatureFromDeclaration(functionDeclaration);
+                const returnType = signature.getReturnType();
+                method.returnType = getFullyQualifiedNameOfType(returnType);
+                const paramsType: Array<QualifiedName> = signature.getParameters().map(param => {
+                    const type = typeChecker.getTypeOfSymbolAtLocation(param, functionDeclaration);
+                    return getFullyQualifiedNameOfType(type);
+                });
+                method.argumentTypes = paramsType;
+                childElement = method;
                 skipChildren = true;
                 break;
-
         }
 
         if (childElement) {
@@ -109,6 +116,14 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
         }
         console.warn("Unable to resolve type: '" + symbol.getName() + "'");
         return new QualifiedName(["unknown?"]);
+    }
+
+    function getFullyQualifiedNameOfType(type: ts.Type) {
+        if (type.getSymbol()) {
+            return getFullyQualifiedName(type.getSymbol());
+        } else {
+            return new QualifiedName([typeChecker.typeToString(type)]);
+        }
     }
 
     function getVisibility(node: ts.Node) {
