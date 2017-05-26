@@ -42,7 +42,8 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
                 if (classDeclaration.heritageClauses) {
                     let extendsClause = Collections.firstOrDefault(classDeclaration.heritageClauses, c => c.token === ts.SyntaxKind.ExtendsKeyword);
                     if (extendsClause && extendsClause.types.length > 0) {
-                        classDef.extends = getFullyQualifiedName(extendsClause.types[0]);
+                        const symbol = typeChecker.getSymbolAtLocation(extendsClause.types[0].expression);
+                        classDef.extends = getFullyQualifiedName(symbol);
                     }
                 }
                 childElement = classDef;
@@ -53,6 +54,9 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
             case ts.SyntaxKind.PropertyDeclaration:
                 let propertyDeclaration = <ts.PropertyDeclaration> node;
                 let property = new Property((<ts.Identifier>propertyDeclaration.name).text, currentElement, getVisibility(node), getLifetime(node));
+                const type = typeChecker.getTypeAtLocation(propertyDeclaration);
+                const qualifiedName = getFullyQualifiedName(type.getSymbol());
+                property.type = qualifiedName;
                 switch (node.kind) {
                     case ts.SyntaxKind.GetAccessor:
                         property.hasGetter = true;
@@ -84,8 +88,8 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
         ts.forEachChild(node, (node) => analyseNode(node, childElement || currentElement));
     }
 
-    function getFullyQualifiedName(expression: ts.ExpressionWithTypeArguments) {
-        let symbol = typeChecker.getSymbolAtLocation(expression.expression);
+    function getFullyQualifiedName(symbol: ts.Symbol) {
+        // let symbol = typeChecker.getSymbolAtLocation(expression.expression);
         if (symbol) {
             let nameParts = typeChecker.getFullyQualifiedName(symbol).split(".");
             if (symbol.declarations.length > 0 && symbol.declarations[0].kind === ts.SyntaxKind.ImportSpecifier) {
@@ -103,7 +107,7 @@ export function collectInformation(program: ts.Program, sourceFile: ts.SourceFil
             }
             return new QualifiedName(nameParts);
         }
-        console.warn("Unable to resolve type: '" + expression.getText() + "'");
+        console.warn("Unable to resolve type: '" + symbol.getName() + "'");
         return new QualifiedName(["unknown?"]);
     }
 

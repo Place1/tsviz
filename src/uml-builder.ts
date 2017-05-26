@@ -97,6 +97,16 @@ function buildClass(classDef: Class, g: graphviz.Graph, path: string) {
             classDef.extends.parts.reduce((path, name) => getGraphNodeId(path, name), ""),
             { "arrowhead": "onormal" });
     }
+
+    if (classDef.dependencies) {
+        classDef.dependencies.forEach(dependency => {
+            g.addEdge(
+                classNode,
+                dependency.parts.reduce((path, name) => getGraphNodeId(path, name), ""),
+                { "arrowhead": "vee" }
+            );
+        });
+    }
 }
 
 function combineSignatures<T extends Element>(elements: T[], map: (e: T) => string): string {
