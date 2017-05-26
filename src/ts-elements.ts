@@ -1,3 +1,4 @@
+import { flatten } from './util';
 
 export enum Visibility {
     Private,
@@ -129,7 +130,11 @@ export class Class extends Element {
     }
 
     public get dependencies(): Array<QualifiedName> {
-        const deps = this.properties.map(p => p.type);
+        const deps = [].concat(
+            ...this.properties.map(p => p.type),
+            ...flatten(this.methods.map(m => m.argumentTypes)),
+            ...this.methods.map(m => m.returnType)
+        )
         const uniqueDeps = new Map<string, QualifiedName>();
         deps.forEach(dep => {
             // loop to get rid of duplicate dependencies.
